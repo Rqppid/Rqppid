@@ -44,8 +44,16 @@ export default function Home() {
     setError(null);
     setResult(null);
 
+    let resized: File;
     try {
-      const resized = await resizeImage(file);
+      resized = await resizeImage(file);
+    } catch {
+      setError("This image could not be processed. Try a different photo.");
+      setStatus("error");
+      return;
+    }
+
+    try {
       const formData = new FormData();
       formData.set("image", resized);
       if (contextText.trim()) formData.set("context", contextText.trim());

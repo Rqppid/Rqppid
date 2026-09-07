@@ -97,6 +97,15 @@ export async function POST(request: Request) {
     if (error instanceof Anthropic.APIError) {
       return fail("upstream_error", "The triage model is temporarily unavailable.", 502);
     }
+    if (error instanceof Anthropic.AnthropicError) {
+      // Thrown by the SDK when the model's output fails schema validation
+      // (e.g. an out-of-range value) — not an API-level failure.
+      return fail(
+        "model_output_invalid",
+        "The model's response could not be parsed into a triage result.",
+        200
+      );
+    }
     return fail("upstream_error", "Unexpected error contacting the triage model.", 502);
   }
 }
