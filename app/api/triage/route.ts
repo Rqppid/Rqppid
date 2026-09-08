@@ -1,11 +1,13 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { anthropic, TRIAGE_MODEL } from "@/lib/anthropicClient";
+import { z } from "zod";
+import { ApiError } from "@google/genai";
+import { genai, TRIAGE_MODEL } from "@/lib/geminiClient";
 import { SYSTEM_PROMPT } from "@/lib/rubric";
 import { TriageResultSchema, type ErrorCode, type TriageResponse } from "@/lib/schema";
 import { ACCEPTED_IMAGE_TYPES, MAX_CONTEXT_CHARS, MAX_UPLOAD_BYTES } from "@/lib/constants";
 
 export const maxDuration = 60;
+
+const RESPONSE_JSON_SCHEMA = z.toJSONSchema(TriageResultSchema);
 
 function fail(code: ErrorCode, message: string, status: number) {
   const body: TriageResponse = { ok: false, error: { code, message } };
@@ -13,7 +15,7 @@ function fail(code: ErrorCode, message: string, status: number) {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     return fail("missing_api_key", "Server is not configured with an API key.", 500);
   }
 
@@ -41,43 +43,51 @@ export async function POST(request: Request) {
   const base64Data = Buffer.from(await image.arrayBuffer()).toString("base64");
 
   try {
-    const response = await anthropic.messages.parse({
+    const response = await genai.models.generateContent({
       model: TRIAGE_MODEL,
-      max_tokens: 16000,
-      system: SYSTEM_PROMPT,
-      output_config: { format: zodOutputFormat(TriageResultSchema) },
-      messages: [
+      contents: [
         {
           role: "user",
-          content: [
+          parts: [
             {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: image.type as "image/jpeg" | "image/png" | "image/webp",
-                data: base64Data,
-              },
-            },
-            {
-              type: "text",
               text: contextText
                 ? `Inspector-provided context: ${contextText}`
                 : "No additional context was provided.",
             },
+            {
+              inlineData: {
+                mimeType: image.type,
+                data: base64Data,
+              },
+            },
           ],
         },
       ],
+      config: {
+        systemInstruction: SYSTEM_PROMPT,
+        responseMimeType: "application/json",
+        responseJsonSchema: RESPONSE_JSON_SCHEMA,
+      },
     });
 
-    if (response.stop_reason === "refusal") {
+    if (response.promptFeedback?.blockReason) {
+      return fail("model_declined", "The model declined to assess this image.", 200);
+    }
+
+    const finishReason = response.candidates?.[0]?.finishReason;
+    if (finishReason && finishReason !== "STOP") {
       return fail(
-        "model_declined",
-        "The model declined to assess this image.",
+        finishReason === "SAFETY" || finishReason === "PROHIBITED_CONTENT"
+          ? "model_declined"
+          : "model_output_invalid",
+        finishReason === "SAFETY" || finishReason === "PROHIBITED_CONTENT"
+          ? "The model declined to assess this image."
+          : "The model's response could not be parsed into a triage result.",
         200
       );
     }
 
-    if (!response.parsed_output) {
+    if (!response.text) {
       return fail(
         "model_output_invalid",
         "The model's response could not be parsed into a triage result.",
@@ -85,26 +95,46 @@ export async function POST(request: Request) {
       );
     }
 
-    const body: TriageResponse = { ok: true, data: response.parsed_output };
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(response.text);
+    } catch {
+      return fail(
+        "model_output_invalid",
+        "The model's response could not be parsed into a triage result.",
+        200
+      );
+    }
+
+    const parsed = TriageResultSchema.safeParse(parsedJson);
+    if (!parsed.success) {
+      return fail(
+        "model_output_invalid",
+        "The model's response could not be parsed into a triage result.",
+        200
+      );
+    }
+
+    const body: TriageResponse = { ok: true, data: parsed.data };
     return Response.json(body, { status: 200 });
   } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) {
-      return fail("missing_api_key", "Server API key was rejected.", 500);
-    }
-    if (error instanceof Anthropic.RateLimitError) {
-      return fail("rate_limited", "Rate limited by the API. Please try again shortly.", 429);
-    }
-    if (error instanceof Anthropic.APIError) {
+    if (error instanceof ApiError) {
+      // Gemini reports an invalid key as 400 INVALID_ARGUMENT with the
+      // reason embedded in the message, not as a 401/403.
+      if (
+        error.status === 400 &&
+        (error.message.includes("API_KEY_INVALID") ||
+          error.message.includes("API key not valid"))
+      ) {
+        return fail("missing_api_key", "Server API key was rejected.", 500);
+      }
+      if (error.status === 403) {
+        return fail("missing_api_key", "Server API key was rejected.", 500);
+      }
+      if (error.status === 429) {
+        return fail("rate_limited", "Rate limited by the API. Please try again shortly.", 429);
+      }
       return fail("upstream_error", "The triage model is temporarily unavailable.", 502);
-    }
-    if (error instanceof Anthropic.AnthropicError) {
-      // Thrown by the SDK when the model's output fails schema validation
-      // (e.g. an out-of-range value) — not an API-level failure.
-      return fail(
-        "model_output_invalid",
-        "The model's response could not be parsed into a triage result.",
-        200
-      );
     }
     return fail("upstream_error", "Unexpected error contacting the triage model.", 502);
   }

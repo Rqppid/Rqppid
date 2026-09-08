@@ -21,7 +21,7 @@ site before any action is taken.
 ```bash
 npm install
 cp .env.example .env.local
-# edit .env.local and set ANTHROPIC_API_KEY
+# edit .env.local and set GEMINI_API_KEY
 npm run dev
 ```
 
@@ -34,8 +34,8 @@ tolerates.
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | yes | — | Anthropic API key used by the server-side triage route. |
-| `ANTHROPIC_MODEL` | no | `claude-opus-5` | Override the model used for triage. |
+| `GEMINI_API_KEY` | yes | — | Gemini API key (from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) used by the server-side triage route. |
+| `GEMINI_MODEL` | no | `gemini-3.5-flash` | Override the model used for triage. |
 
 ## How it works
 
@@ -43,8 +43,8 @@ tolerates.
    browser before upload (Vercel serverless functions cap request bodies at
    4.5MB, and phone photos routinely exceed that).
 2. `POST /api/triage` sends the image (plus optional free-text location/notes)
-   to the Claude API as a vision input, with the risk rubric embedded in the
-   system prompt (`lib/rubric.ts`).
+   to the Gemini API as a vision input, with the risk rubric embedded in the
+   system instruction (`lib/rubric.ts`).
 3. The model returns structured JSON (`lib/schema.ts`): category, label,
    one-line reasoning, confidence, and `flag_for_human_review: true`. If the
    photo can't be usefully triaged (blurry, dark, not a road, etc.), the model
@@ -66,7 +66,7 @@ tolerates.
 
 ## Deploying to Vercel
 
-Set `ANTHROPIC_API_KEY` (and optionally `ANTHROPIC_MODEL`) as a Project
+Set `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) as a Project
 Environment Variable in Vercel for Production and Preview, then deploy.
 Before a live demo, re-run the "clear photo" and "oversized photo" tests
 against the deployed URL specifically — local `next dev` does not enforce
