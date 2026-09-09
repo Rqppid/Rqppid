@@ -1,14 +1,14 @@
-import Link from "next/link";
 import { HeatmapExplorer } from "@/components/HeatmapExplorer";
+import { TransitionLink } from "@/components/TransitionLink";
 
 export default function HeatmapPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[#071014] text-white">
       <div className="border-b border-white/10 bg-[#071014]/90 px-5 py-4 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <Link className="text-sm font-semibold text-zinc-300 transition hover:text-lime-300" href="/">
+          <TransitionLink className="text-sm font-semibold text-zinc-300 transition hover:text-lime-300" href="/">
             ← Back to HotPots
-          </Link>
+          </TransitionLink>
           <span className="text-sm font-semibold tracking-[-.05em]">
             hot<span className="text-lime-300">pots</span>
           </span>

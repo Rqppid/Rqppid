@@ -1,5 +1,26 @@
 import Link from "next/link";
 import { CATEGORY_STYLES } from "@/lib/constants";
+import { Reveal } from "@/components/Reveal";
+import { ScrollProgress } from "@/components/ScrollProgress";
+import { TransitionLink } from "@/components/TransitionLink";
+
+const PROCESS_STEPS = [
+  {
+    n: "01",
+    title: "Upload a photo",
+    body: "An inspector or member of the public photographs the defect on-site. Resized in the browser before it uploads.",
+  },
+  {
+    n: "02",
+    title: "AI suggests a category",
+    body: "One Gemini vision call scores it against a 5-category risk rubric and explains its reasoning in one sentence.",
+  },
+  {
+    n: "03",
+    title: "A human reviews it",
+    body: "Every result is flagged for review. Nothing gets repaired, scheduled, or dismissed without a person deciding.",
+  },
+];
 
 const CATEGORY_ORDER = [1, 2, 3, 4, 5] as const;
 
@@ -45,6 +66,7 @@ function Pin({ x, y, size = "normal" }: { x: number; y: number; size?: "normal" 
 export default function LandingPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#071014] text-[#f3f7f4] selection:bg-lime-300 selection:text-[#071014]">
+      <ScrollProgress />
       <div className="relative min-h-screen bg-[radial-gradient(circle_at_73%_44%,rgba(119,174,125,.16),transparent_24%),radial-gradient(circle_at_25%_100%,rgba(255,145,56,.12),transparent_30%)]">
         <nav className="relative z-20 mx-auto flex max-w-[1440px] items-center justify-between px-6 py-6 lg:px-10">
           <Link href="/" className="text-xl font-semibold tracking-[-0.06em]">
@@ -52,22 +74,22 @@ export default function LandingPage() {
             <sup className="ml-1 text-[9px] tracking-normal text-zinc-500">BETA</sup>
           </Link>
           <div className="hidden items-center gap-7 text-sm text-zinc-400 md:flex">
-            <Link href="/heatmap" className="hover:text-white">
-              Live map
-            </Link>
-            <a href="#how" className="hover:text-white">
-              How it works
-            </a>
             <a href="#about" className="hover:text-white">
               About
             </a>
+            <a href="#how" className="hover:text-white">
+              How it works
+            </a>
+            <TransitionLink href="/heatmap" className="hover:text-white">
+              Live map
+            </TransitionLink>
           </div>
-          <Link
+          <TransitionLink
             href="/tool"
             className="rounded-full bg-lime-300 px-4 py-2 text-sm font-semibold text-[#071014] transition hover:bg-lime-200"
           >
             Report a pothole <span aria-hidden="true">↗</span>
-          </Link>
+          </TransitionLink>
         </nav>
 
         <section className="relative z-10 mx-auto grid max-w-[1440px] gap-12 px-6 pb-12 pt-12 lg:grid-cols-[.83fr_1.17fr] lg:px-10 lg:pb-20 lg:pt-24">
@@ -84,12 +106,12 @@ export default function LandingPage() {
               automated repair decision.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link
+              <TransitionLink
                 href="/tool"
                 className="rounded-full bg-lime-300 px-5 py-3 font-semibold text-[#071014] transition hover:bg-lime-200"
               >
                 Report an issue <span aria-hidden="true">→</span>
-              </Link>
+              </TransitionLink>
               <a
                 href="#how"
                 className="rounded-full border border-white/15 px-5 py-3 font-semibold text-zinc-200 transition hover:border-white/40"
@@ -112,12 +134,12 @@ export default function LandingPage() {
                 <span className="mr-2 inline-block h-2 w-2 rounded-full bg-lime-300" />
                 Illustrative demo data
               </div>
-              <Link
+              <TransitionLink
                 href="/heatmap"
                 className="rounded-full border border-lime-300/40 bg-lime-300/10 px-3 py-2 text-xs font-semibold text-lime-300 backdrop-blur transition hover:bg-lime-300/20"
               >
                 See real NI data ↗
-              </Link>
+              </TransitionLink>
             </div>
             <div
               className="absolute inset-0 opacity-70"
@@ -168,8 +190,8 @@ export default function LandingPage() {
       </div>
 
       {/* What happens today */}
-      <section id="about" className="border-t border-white/10 bg-[#0a1214] px-6 py-16 lg:px-10">
-        <div className="mx-auto flex max-w-[1000px] flex-col gap-3">
+      <section id="about" className="scroll-anchor border-t border-white/10 bg-[#0a1214] px-6 py-16 lg:px-10">
+        <Reveal className="mx-auto flex max-w-[1000px] flex-col gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">
             What happens today
           </h2>
@@ -182,23 +204,35 @@ export default function LandingPage() {
             suggestion from a single photo, not a replacement for the
             inspector.
           </p>
-        </div>
+        </Reveal>
       </section>
 
       {/* What I built */}
-      <section id="how" className="border-t border-white/10 px-6 py-16 lg:px-10">
-        <div className="mx-auto flex max-w-[1000px] flex-col gap-5">
-          <h2 className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">
-            What I built
-          </h2>
-          <p className="text-lg leading-7 text-zinc-300">
-            One photo, one Gemini vision call, one structured JSON result
-            scored against a 5-category risk rubric modelled on how UK highway
-            authorities triage defects. Every result is flagged for human
-            review — the model can also say &ldquo;I can&rsquo;t assess this
-            image&rdquo; rather than force a category onto a blurry or unclear
-            photo.
-          </p>
+      <section id="how" className="scroll-anchor border-t border-white/10 px-6 py-16 lg:px-10">
+        <Reveal className="mx-auto flex max-w-[1000px] flex-col gap-8">
+          <div className="flex flex-col gap-5">
+            <h2 className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">
+              What I built
+            </h2>
+            <p className="text-lg leading-7 text-zinc-300">
+              One photo, one Gemini vision call, one structured JSON result
+              scored against a 5-category risk rubric modelled on how UK highway
+              authorities triage defects. Every result is flagged for human
+              review — the model can also say &ldquo;I can&rsquo;t assess this
+              image&rdquo; rather than force a category onto a blurry or unclear
+              photo.
+            </p>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-3">
+            {PROCESS_STEPS.map((step) => (
+              <div key={step.n} className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[.03] p-5">
+                <span className="text-xs font-semibold text-zinc-600">{step.n}</span>
+                <h3 className="font-medium text-white">{step.title}</h3>
+                <p className="text-sm leading-6 text-zinc-400">{step.body}</p>
+              </div>
+            ))}
+          </div>
 
           <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-[#0d1918] p-5 shadow-2xl shadow-black/20 sm:p-7">
             <div className="grid grid-cols-5 gap-2">
@@ -234,12 +268,12 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Where it broke / what I learned */}
       <section className="border-t border-white/10 bg-[#0a1214] px-6 py-16 lg:px-10">
-        <div className="mx-auto flex max-w-[1000px] flex-col gap-5">
+        <Reveal className="mx-auto flex max-w-[1000px] flex-col gap-5">
           <h2 className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">
             Where it broke, what I learned
           </h2>
@@ -254,12 +288,12 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Tech stack + footer */}
       <section className="border-t border-white/10 px-6 py-10 lg:px-10">
-        <div className="mx-auto flex max-w-[1000px] flex-col items-center gap-6 text-center">
+        <Reveal className="mx-auto flex max-w-[1000px] flex-col items-center gap-6 text-center">
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-zinc-600">
             <span>Next.js 16</span>
             <span aria-hidden="true">·</span>
@@ -274,10 +308,10 @@ export default function LandingPage() {
             does not measure defects precisely — it estimates from a single
             photo.
           </p>
-          <Link href="/tool" className="text-sm font-semibold text-lime-300 hover:underline">
+          <TransitionLink href="/tool" className="text-sm font-semibold text-lime-300 hover:underline">
             Try the live demo →
-          </Link>
-        </div>
+          </TransitionLink>
+        </Reveal>
       </section>
     </main>
   );
