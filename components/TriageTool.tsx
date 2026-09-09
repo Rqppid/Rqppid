@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ClaimPack } from "@/components/ClaimPack";
 import { ContextField } from "@/components/ContextField";
 import { Disclaimer } from "@/components/Disclaimer";
 import { ErrorBanner } from "@/components/ErrorBanner";
@@ -20,6 +21,7 @@ export function TriageTool() {
   const [result, setResult] = useState<TriageResult | null>(null);
   const [simulated, setSimulated] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showClaimPack, setShowClaimPack] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export function TriageTool() {
     setSimulated(false);
     setError(null);
     setStatus("idle");
+    setShowClaimPack(false);
   }
 
   async function handleSubmit() {
@@ -46,6 +49,7 @@ export function TriageTool() {
     setError(null);
     setResult(null);
     setSimulated(false);
+    setShowClaimPack(false);
 
     let resized: File;
     try {
@@ -82,7 +86,7 @@ export function TriageTool() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-7 px-5 py-12 sm:py-16">
-      <header className="max-w-2xl">
+      <header className="max-w-2xl print:hidden">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lime-300">
           AI-assisted report review
         </p>
@@ -95,9 +99,11 @@ export function TriageTool() {
         </p>
       </header>
 
-      <Disclaimer />
+      <div className="print:hidden">
+        <Disclaimer />
+      </div>
 
-      <section className="grid gap-5 lg:grid-cols-[1fr_.6fr]">
+      <section className="grid gap-5 lg:grid-cols-[1fr_.6fr] print:hidden">
         <div className="flex flex-col gap-5 rounded-3xl border border-white/10 bg-[#0d1918] p-5 shadow-2xl shadow-black/20 sm:p-7">
           <UploadDropzone
             previewUrl={previewUrl}
@@ -128,11 +134,22 @@ export function TriageTool() {
             <ErrorBanner message={error} onRetry={file ? handleSubmit : undefined} />
           )}
           {status === "success" && result && (
-            <ResultCard result={result} simulated={simulated} />
+            <>
+              <ResultCard result={result} simulated={simulated} />
+              {result.can_assess && result.category !== 5 && !simulated && !showClaimPack && (
+                <button
+                  type="button"
+                  onClick={() => setShowClaimPack(true)}
+                  className="rounded-xl border border-lime-300/40 bg-lime-300/10 px-4 py-2.5 text-sm font-semibold text-lime-300 transition hover:bg-lime-300/20"
+                >
+                  Prepare claim evidence →
+                </button>
+              )}
+            </>
           )}
         </div>
 
-        <aside className="rounded-3xl border border-white/10 bg-[#0a1214] p-6">
+        <aside className="rounded-3xl border border-white/10 bg-[#0a1214] p-6 print:hidden">
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-lime-300">
             A better report
           </p>
@@ -163,7 +180,11 @@ export function TriageTool() {
         </aside>
       </section>
 
-      <footer className="text-center text-xs text-zinc-500">
+      {showClaimPack && result && previewUrl && (
+        <ClaimPack previewUrl={previewUrl} result={result} contextText={contextText} />
+      )}
+
+      <footer className="text-center text-xs text-zinc-500 print:hidden">
         Powered by Gemini · photos are analysed on demand and not stored.
       </footer>
     </main>
