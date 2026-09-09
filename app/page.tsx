@@ -1,141 +1,28 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useRef, useState } from "react";
-import { ContextField } from "@/components/ContextField";
-import { Disclaimer } from "@/components/Disclaimer";
-import { ErrorBanner } from "@/components/ErrorBanner";
-import { ResultCard } from "@/components/ResultCard";
-import { Spinner } from "@/components/Spinner";
-import { UploadDropzone } from "@/components/UploadDropzone";
-import { resizeImage } from "@/lib/resizeImage";
-import type { TriageResponse, TriageResult } from "@/lib/schema";
-
-type Status = "idle" | "loading" | "success" | "error";
+function Pin({ x, y, size = "normal" }: { x: number; y: number; size?: "normal" | "large" }) {
+  const large = size === "large";
+  return <span className={`absolute grid place-items-center rounded-full ${large ? "h-12 w-12 bg-orange-400/20 ring-1 ring-orange-300/50" : "h-7 w-7 bg-orange-400/15"}`} style={{ left: `${x}%`, top: `${y}%` }}><span className={`rounded-full bg-orange-400 ${large ? "h-4 w-4 shadow-[0_0_28px_8px_rgba(251,146,60,.55)]" : "h-2.5 w-2.5 shadow-[0_0_16px_4px_rgba(251,146,60,.45)]"}`} /></span>;
+}
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [contextText, setContextText] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [result, setResult] = useState<TriageResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const previewUrlRef = useRef<string | null>(null);
+  return <main className="min-h-screen overflow-hidden bg-[#071014] text-[#f3f7f4] selection:bg-lime-300 selection:text-[#071014]">
+    <div className="relative min-h-screen bg-[radial-gradient(circle_at_73%_44%,rgba(119,174,125,.16),transparent_24%),radial-gradient(circle_at_25%_100%,rgba(255,145,56,.12),transparent_30%)]">
+      <nav className="relative z-20 mx-auto flex max-w-[1440px] items-center justify-between px-6 py-6 lg:px-10"><Link href="/" className="text-xl font-semibold tracking-[-0.06em]">hot<span className="text-lime-300">pots</span><sup className="ml-1 text-[9px] tracking-normal text-zinc-500">BETA</sup></Link><div className="hidden items-center gap-7 text-sm text-zinc-400 md:flex"><a href="#map" className="hover:text-white">Live map</a><a href="#how" className="hover:text-white">How it works</a><a href="#about" className="hover:text-white">About</a></div><Link href="/tool" className="rounded-full bg-lime-300 px-4 py-2 text-sm font-semibold text-[#071014] transition hover:bg-lime-200">Report a pothole <span aria-hidden="true">↗</span></Link></nav>
 
-  useEffect(() => {
-    return () => {
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    };
-  }, []);
+      <section className="relative z-10 mx-auto grid max-w-[1440px] gap-12 px-6 pb-12 pt-12 lg:grid-cols-[.83fr_1.17fr] lg:px-10 lg:pb-20 lg:pt-24">
+        <div className="flex flex-col justify-center"><p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-lime-300">Belfast road intelligence</p><h1 className="max-w-xl text-5xl font-medium leading-[.94] tracking-[-0.075em] sm:text-7xl">See where the road needs us <span className="text-zinc-500">most.</span></h1><p className="mt-7 max-w-md text-base leading-7 text-zinc-400">HotPots turns everyday reports into a living map of road defects — helping people spot issues and teams prioritise the places that matter.</p><div className="mt-9 flex flex-wrap gap-3"><Link href="/tool" className="rounded-full bg-lime-300 px-5 py-3 font-semibold text-[#071014] transition hover:bg-lime-200">Report an issue <span aria-hidden="true">→</span></Link><a href="#map" className="rounded-full border border-white/15 px-5 py-3 font-semibold text-zinc-200 transition hover:border-white/40">Explore the map</a></div><div className="mt-12 flex gap-8 border-t border-white/10 pt-6"><div><p className="text-2xl font-medium tracking-tight">24</p><p className="mt-1 text-xs text-zinc-500">active reports</p></div><div><p className="text-2xl font-medium tracking-tight">06</p><p className="mt-1 text-xs text-zinc-500">high-priority areas</p></div><div><p className="text-2xl font-medium tracking-tight">3.2d</p><p className="mt-1 text-xs text-zinc-500">avg. review time</p></div></div></div>
 
-  function selectFile(selected: File) {
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    const url = URL.createObjectURL(selected);
-    previewUrlRef.current = url;
-    setFile(selected);
-    setPreviewUrl(url);
-    setResult(null);
-    setError(null);
-    setStatus("idle");
-  }
-
-  async function handleSubmit() {
-    if (!file || status === "loading") return;
-    setStatus("loading");
-    setError(null);
-    setResult(null);
-
-    let resized: File;
-    try {
-      resized = await resizeImage(file);
-    } catch {
-      setError("This image could not be processed. Try a different photo.");
-      setStatus("error");
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.set("image", resized);
-      if (contextText.trim()) formData.set("context", contextText.trim());
-
-      const res = await fetch("/api/triage", { method: "POST", body: formData });
-      const body: TriageResponse = await res.json();
-
-      if (body.ok) {
-        setResult(body.data);
-        setStatus("success");
-      } else {
-        setError(body.error.message);
-        setStatus("error");
-      }
-    } catch {
-      setError("Could not reach the server. Check your connection and try again.");
-      setStatus("error");
-    }
-  }
-
-  const isLoading = status === "loading";
-
-  return (
-    <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10 sm:py-16">
-      <header className="flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl shadow-lg shadow-blue-600/25"
-            aria-hidden="true"
-          >
-            🚧
-          </span>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
-            Pothole Triage Tool
-          </h1>
+        <div id="map" className="relative min-h-[510px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0d1918] shadow-2xl shadow-black/30 lg:min-h-[650px]">
+          <div className="absolute left-5 right-5 top-5 z-10 flex items-center justify-between"><div className="rounded-full border border-white/10 bg-[#0c1515]/80 px-3 py-2 text-xs text-zinc-300 backdrop-blur"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-lime-300" />Live report activity</div><button className="rounded-full border border-white/10 bg-[#0c1515]/80 px-3 py-2 text-xs text-zinc-300 backdrop-blur">Belfast ▾</button></div>
+          <div className="absolute inset-0 opacity-70" style={{ backgroundImage: "linear-gradient(30deg,transparent 47%,rgba(202,220,199,.11) 48%,rgba(202,220,199,.11) 49%,transparent 50%),linear-gradient(-18deg,transparent 48%,rgba(202,220,199,.1) 49%,rgba(202,220,199,.1) 50%,transparent 51%),linear-gradient(90deg,transparent 49%,rgba(202,220,199,.07) 50%,transparent 51%)", backgroundSize: "110px 80px, 150px 110px, 96px 96px" }} />
+          <div className="absolute left-[12%] top-[43%] h-[2px] w-[80%] rotate-[-10deg] bg-[#b5c5a4]/35 shadow-[0_0_12px_2px_rgba(205,227,190,.1)]" /><div className="absolute left-[39%] top-[-7%] h-[115%] w-[2px] rotate-[23deg] bg-[#b5c5a4]/25" /><div className="absolute left-[64%] top-[18%] h-[2px] w-[48%] rotate-[57deg] bg-[#b5c5a4]/25" />
+          <p className="absolute left-[42%] top-[34%] text-3xl font-medium tracking-[-.08em] text-[#cbd7c8]/30">BELFAST</p><p className="absolute left-[15%] top-[57%] text-[10px] uppercase tracking-[.2em] text-[#cbd7c8]/40">Falls</p><p className="absolute right-[14%] top-[55%] text-[10px] uppercase tracking-[.2em] text-[#cbd7c8]/40">Ballyhackamore</p><p className="absolute right-[32%] top-[76%] text-[10px] uppercase tracking-[.2em] text-[#cbd7c8]/40">Ormeau</p>
+          <Pin x={21} y={30} /><Pin x={32} y={56} /><Pin x={48} y={61} /><Pin x={66} y={28} /><Pin x={76} y={50} /><Pin x={61} y={72} size="large" />
+          <aside className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/10 bg-[#111e1d]/95 p-4 shadow-xl backdrop-blur sm:left-auto sm:w-[310px]"><div className="flex items-start justify-between"><div><p className="text-xs font-medium text-lime-300">Highest activity</p><h2 className="mt-1 text-lg font-medium tracking-tight">Ormeau Road</h2></div><span className="rounded-full bg-orange-400/15 px-2 py-1 text-[10px] font-semibold text-orange-300">HIGH</span></div><p className="mt-3 text-sm leading-5 text-zinc-400">8 reports in the last 14 days. Surface defects cluster around the southbound lane.</p><button className="mt-4 text-sm font-semibold text-white">View hotspot <span className="text-lime-300">→</span></button></aside>
         </div>
-        <p className="max-w-sm text-sm text-zinc-600 dark:text-zinc-400">
-          Upload a photo of a road or footway defect to get a suggested risk category.
-        </p>
-      </header>
-
-      <Disclaimer />
-
-      <div className="flex flex-col gap-5 rounded-2xl border border-zinc-200/80 bg-white/80 p-5 shadow-xl shadow-zinc-900/5 backdrop-blur-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900/60">
-        <UploadDropzone
-          previewUrl={previewUrl}
-          disabled={isLoading}
-          onFileSelected={selectFile}
-          onRejected={(message) => {
-            setError(message);
-            setStatus("error");
-          }}
-        />
-
-        <ContextField value={contextText} onChange={setContextText} disabled={isLoading} />
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!file || isLoading}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-600/30 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
-        >
-          {isLoading ? (
-            <>
-              <Spinner />
-              Analyzing photo…
-            </>
-          ) : (
-            "Analyze photo"
-          )}
-        </button>
-
-        {status === "error" && error && (
-          <ErrorBanner message={error} onRetry={file ? handleSubmit : undefined} />
-        )}
-
-        {status === "success" && result && <ResultCard result={result} />}
-      </div>
-
-      <footer className="text-center text-xs text-zinc-400 dark:text-zinc-600">
-        Powered by Gemini · your photo is analyzed on demand and not stored.
-      </footer>
+      </section>
     </div>
-  );
+    <section id="how" className="border-t border-white/10 bg-[#0a1214] px-6 py-16 lg:px-10"><div className="mx-auto grid max-w-[1440px] gap-7 md:grid-cols-3"><p className="text-sm leading-6 text-zinc-500">A small mock-up of a more transparent way to see, understand and act on road defects.</p><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">01 / report</p><p className="mt-3 text-xl tracking-tight">Snap a photo and add the detail that matters.</p></div><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-lime-300">02 / prioritise</p><p className="mt-3 text-xl tracking-tight">See patterns emerge across the city.</p></div></div></section>
+  </main>;
 }

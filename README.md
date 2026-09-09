@@ -1,4 +1,4 @@
-# Pothole Triage Tool
+# HotPots
 
 A single-page demo tool for a UK highway authority: upload a photo of a road or
 footway defect, and get back a suggested 1-5 risk category, a one-line
