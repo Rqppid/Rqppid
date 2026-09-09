@@ -48,10 +48,10 @@ export function UploadDropzone({
       onKeyDown={(e) => {
         if (!disabled && (e.key === "Enter" || e.key === " ")) inputRef.current?.click();
       }}
-      className={`flex min-h-56 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+      className={`flex min-h-56 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-all ${
         isDragging
-          ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800"
-          : "border-zinc-300 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+          : "border-zinc-300 bg-zinc-50/80 hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950/40 dark:hover:border-zinc-600 dark:hover:bg-zinc-900"
       } ${disabled ? "pointer-events-none opacity-60" : ""}`}
     >
       <input
@@ -67,10 +67,32 @@ export function UploadDropzone({
         <img
           src={previewUrl}
           alt="Selected road defect photo"
-          className="max-h-64 max-w-full rounded-lg object-contain"
+          className="max-h-64 max-w-full rounded-lg object-contain shadow-sm"
         />
       ) : (
         <>
+          <span
+            className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+              isDragging
+                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                : "bg-zinc-200/70 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+            }`}
+            aria-hidden="true"
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 16V4M12 4l-4 4M12 4l4 4" />
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
+          </span>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Drag a photo here, or click to choose one
           </p>
