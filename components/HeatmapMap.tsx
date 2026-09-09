@@ -17,15 +17,27 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
+function daysSince(isoDate: string): number | null {
+  const recorded = Date.parse(isoDate + "T00:00:00Z");
+  if (Number.isNaN(recorded)) return null;
+  const todayUtc = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate());
+  return Math.max(0, Math.round((todayUtc - recorded) / 86_400_000));
+}
+
 function popupHtml(p: HeatmapPoint): string {
   const sourceLabel = p.source === "DFI_SURFACE_DEFECT" ? "DfI Roads (recorded defect)" : "Public enquiry (unconfirmed)";
+  const days = p.recordedDate ? daysSince(p.recordedDate) : null;
+  const recordedLine =
+    p.recordedDate && days !== null
+      ? `${p.recordedDate} (${days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`})`
+      : "Unknown";
   return `
     <div style="font: 13px system-ui, sans-serif; line-height: 1.5; min-width: 200px;">
       <div style="font-weight: 700; margin-bottom: 2px;">${escapeHtml(p.defectType)}</div>
       <div>Priority: <strong>${escapeHtml(p.severityLabel)}</strong></div>
       <div>Road: ${escapeHtml(p.road)}</div>
       <div>Council: ${escapeHtml(p.council)}</div>
-      <div>Recorded: ${p.recordedDate ?? "Unknown"}</div>
+      <div>Recorded: ${escapeHtml(recordedLine)}</div>
       <div>Status: ${escapeHtml(p.status)}</div>
       <div style="margin-top:4px; color:#666;">${escapeHtml(sourceLabel)}</div>
     </div>
