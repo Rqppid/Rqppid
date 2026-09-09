@@ -1,9 +1,10 @@
-# Pothole Triage Tool
+# HotPots
 
-A single-page demo tool for a UK highway authority: upload a photo of a road or
+A demo tool for a UK highway authority: upload a photo of a road or
 footway defect, and get back a suggested 1-5 risk category, a one-line
 justification, and a confidence note, modelled on how a highway authority
-categorises defects.
+categorises defects. The landing page's map/hotspot view is an illustrative
+mock-up, not live data — see Scope below.
 
 **This is decision support for an inspector, not an autonomous repair
 decision.** Every result is flagged for human review and must be verified on
@@ -11,9 +12,11 @@ site before any action is taken.
 
 ## Scope
 
-- One page, one photo at a time.
-- No map, no live camera capture, no database, no auth, no saved history —
-  refreshing the page clears all state.
+- The working tool (`/tool`) handles one photo at a time.
+- The landing page's "live map" is a static, illustrative mock-up — no real
+  map library, no database, no live report feed behind it.
+- No live camera capture, no auth, no saved history — refreshing `/tool`
+  clears all state.
 - No integration with any real government system or real personal data.
 
 ## Getting started

@@ -2,7 +2,7 @@ import { DISCLAIMER_TEXT } from "@/lib/constants";
 
 export function Disclaimer() {
   return (
-    <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-3 text-sm text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-100">
+    <div className="flex items-start gap-2.5 rounded-xl border border-lime-300/20 bg-lime-300/[.06] px-4 py-3 text-sm text-zinc-300">
       <svg
         width="18"
         height="18"
@@ -12,7 +12,7 @@ export function Disclaimer() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="mt-0.5 shrink-0 text-blue-500 dark:text-blue-400"
+        className="mt-0.5 shrink-0 text-lime-300"
         aria-hidden="true"
       >
         <circle cx="12" cy="12" r="10" />

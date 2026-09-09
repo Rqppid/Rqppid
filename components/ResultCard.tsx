@@ -4,14 +4,14 @@ import type { TriageResult } from "@/lib/schema";
 export function ResultCard({ result }: { result: TriageResult }) {
   if (!result.can_assess || result.category === null) {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border-2 border-dashed border-zinc-400 bg-zinc-50 p-5 dark:border-zinc-600 dark:bg-zinc-900">
+      <div className="flex flex-col gap-3 rounded-2xl border-2 border-dashed border-white/20 bg-white/[.03] p-5">
         <div className="flex items-center gap-2">
           <span aria-hidden="true" className="text-lg">
             ⚠️
           </span>
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">Unable to assess</h2>
+          <h2 className="font-semibold text-zinc-100">Unable to assess</h2>
         </div>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">{result.reasoning}</p>
+        <p className="text-sm text-zinc-300">{result.reasoning}</p>
         <p className="text-xs text-zinc-500">
           Try a clearer, well-lit photo of the defect from a straight-on angle.
         </p>

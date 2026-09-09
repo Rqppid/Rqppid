@@ -14,41 +14,44 @@ export type CategoryStyle = {
   badge: string;
 };
 
+// Colors are always-dark (the app no longer follows system light/dark) and
+// deliberately avoid lime/green-300, which is reserved for brand/interactive
+// accents elsewhere in the UI - a risk badge must never read as a button.
 export const CATEGORY_STYLES: Record<1 | 2 | 3 | 4 | 5, CategoryStyle> = {
   1: {
     label: "Emergency",
-    bg: "bg-red-50 dark:bg-red-950/40",
-    border: "border-red-400 dark:border-red-700",
-    text: "text-red-900 dark:text-red-100",
-    badge: "bg-red-600 text-white",
+    bg: "bg-red-500/10",
+    border: "border-red-500/40",
+    text: "text-red-300",
+    badge: "bg-red-500 text-white",
   },
   2: {
     label: "High",
-    bg: "bg-orange-50 dark:bg-orange-950/40",
-    border: "border-orange-400 dark:border-orange-700",
-    text: "text-orange-900 dark:text-orange-100",
-    badge: "bg-orange-500 text-white",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/40",
+    text: "text-orange-300",
+    badge: "bg-orange-500 text-[#071014]",
   },
   3: {
     label: "Medium",
-    bg: "bg-yellow-50 dark:bg-yellow-950/40",
-    border: "border-yellow-400 dark:border-yellow-700",
-    text: "text-yellow-900 dark:text-yellow-100",
-    badge: "bg-yellow-500 text-black",
+    bg: "bg-yellow-400/10",
+    border: "border-yellow-400/40",
+    text: "text-yellow-200",
+    badge: "bg-yellow-400 text-[#071014]",
   },
   4: {
     label: "Low",
-    bg: "bg-green-50 dark:bg-green-950/40",
-    border: "border-green-400 dark:border-green-700",
-    text: "text-green-900 dark:text-green-100",
-    badge: "bg-green-600 text-white",
+    bg: "bg-green-500/10",
+    border: "border-green-500/40",
+    text: "text-green-300",
+    badge: "bg-green-500 text-white",
   },
   5: {
     label: "No action",
-    bg: "bg-zinc-50 dark:bg-zinc-900",
-    border: "border-zinc-300 dark:border-zinc-700",
-    text: "text-zinc-900 dark:text-zinc-100",
-    badge: "bg-zinc-500 text-white",
+    bg: "bg-white/5",
+    border: "border-white/15",
+    text: "text-zinc-300",
+    badge: "bg-white/10 text-zinc-300",
   },
 };
 
