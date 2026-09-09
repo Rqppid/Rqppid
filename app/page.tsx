@@ -52,9 +52,9 @@ export default function LandingPage() {
             <sup className="ml-1 text-[9px] tracking-normal text-zinc-500">BETA</sup>
           </Link>
           <div className="hidden items-center gap-7 text-sm text-zinc-400 md:flex">
-            <a href="#map" className="hover:text-white">
+            <Link href="/heatmap" className="hover:text-white">
               Live map
-            </a>
+            </Link>
             <a href="#how" className="hover:text-white">
               How it works
             </a>
@@ -112,9 +112,12 @@ export default function LandingPage() {
                 <span className="mr-2 inline-block h-2 w-2 rounded-full bg-lime-300" />
                 Illustrative demo data
               </div>
-              <button className="rounded-full border border-white/10 bg-[#0c1515]/80 px-3 py-2 text-xs text-zinc-300 backdrop-blur">
-                Belfast ▾
-              </button>
+              <Link
+                href="/heatmap"
+                className="rounded-full border border-lime-300/40 bg-lime-300/10 px-3 py-2 text-xs font-semibold text-lime-300 backdrop-blur transition hover:bg-lime-300/20"
+              >
+                See real NI data ↗
+              </Link>
             </div>
             <div
               className="absolute inset-0 opacity-70"
