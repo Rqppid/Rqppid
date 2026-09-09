@@ -83,6 +83,9 @@ export default function LandingPage() {
             <TransitionLink href="/heatmap" className="hover:text-white">
               Live map
             </TransitionLink>
+            <TransitionLink href="/legal" className="hover:text-white">
+              Legal &amp; compensation
+            </TransitionLink>
           </div>
           <TransitionLink
             href="/tool"
