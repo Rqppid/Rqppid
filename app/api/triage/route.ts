@@ -4,6 +4,7 @@ import { genai, TRIAGE_MODEL } from "@/lib/geminiClient";
 import { SYSTEM_PROMPT } from "@/lib/rubric";
 import { TriageResultSchema, type ErrorCode, type TriageResponse } from "@/lib/schema";
 import { ACCEPTED_IMAGE_TYPES, MAX_CONTEXT_CHARS, MAX_UPLOAD_BYTES } from "@/lib/constants";
+import { pickDemoResult } from "@/lib/demoResults";
 
 export const maxDuration = 60;
 
@@ -15,11 +16,12 @@ function fail(code: ErrorCode, message: string, status: number) {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.GEMINI_API_KEY) {
-    return fail("missing_api_key", "Server is not configured with an API key.", 500);
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return fail("no_image", "No image was uploaded.", 400);
   }
-
-  const formData = await request.formData();
   const image = formData.get("image");
   const contextRaw = formData.get("context");
 
@@ -33,6 +35,16 @@ export async function POST(request: Request) {
 
   if (image.size > MAX_UPLOAD_BYTES) {
     return fail("file_too_large", "Image is too large. Please use a smaller photo.", 400);
+  }
+
+  // No key configured: return a clearly-labeled simulated result instead of
+  // an error, so the app is demoable with zero setup. This only triggers on
+  // a missing key (a deliberate, known state) - a real key that fails live
+  // still surfaces the honest error below, so a broken key doesn't go
+  // unnoticed behind fake-but-plausible output.
+  if (!process.env.GEMINI_API_KEY) {
+    const body: TriageResponse = { ok: true, data: pickDemoResult(), simulated: true };
+    return Response.json(body, { status: 200 });
   }
 
   const contextText =

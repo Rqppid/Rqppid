@@ -39,5 +39,5 @@ export type ErrorCode =
   | "upstream_error";
 
 export type TriageResponse =
-  | { ok: true; data: TriageResult }
+  | { ok: true; data: TriageResult; simulated?: boolean }
   | { ok: false; error: { code: ErrorCode; message: string } };

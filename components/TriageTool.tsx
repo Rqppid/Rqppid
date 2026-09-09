@@ -18,6 +18,7 @@ export function TriageTool() {
   const [contextText, setContextText] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<TriageResult | null>(null);
+  const [simulated, setSimulated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
 
@@ -34,6 +35,7 @@ export function TriageTool() {
     setFile(selected);
     setPreviewUrl(url);
     setResult(null);
+    setSimulated(false);
     setError(null);
     setStatus("idle");
   }
@@ -43,6 +45,7 @@ export function TriageTool() {
     setStatus("loading");
     setError(null);
     setResult(null);
+    setSimulated(false);
 
     let resized: File;
     try {
@@ -63,6 +66,7 @@ export function TriageTool() {
 
       if (body.ok) {
         setResult(body.data);
+        setSimulated(body.simulated ?? false);
         setStatus("success");
       } else {
         setError(body.error.message);
@@ -123,7 +127,9 @@ export function TriageTool() {
           {status === "error" && error && (
             <ErrorBanner message={error} onRetry={file ? handleSubmit : undefined} />
           )}
-          {status === "success" && result && <ResultCard result={result} />}
+          {status === "success" && result && (
+            <ResultCard result={result} simulated={simulated} />
+          )}
         </div>
 
         <aside className="rounded-3xl border border-white/10 bg-[#0a1214] p-6">

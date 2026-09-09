@@ -37,8 +37,21 @@ tolerates.
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `GEMINI_API_KEY` | yes | — | Gemini API key (from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) used by the server-side triage route. |
+| `GEMINI_API_KEY` | no | — | Gemini API key (from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) used by the server-side triage route. Without it, the app runs in **demo mode** (see below) instead of erroring. |
 | `GEMINI_MODEL` | no | `gemini-3.5-flash` | Override the model used for triage. |
+
+### Demo mode
+
+If `GEMINI_API_KEY` is unset, `/api/triage` returns a randomly-picked
+canned result (`lib/demoResults.ts`) instead of calling Gemini, so the app
+is fully clickable with zero setup — useful for rehearsing the demo flow,
+or as a fallback if venue wifi drops during a live presentation. The result
+card always shows a visible "simulated example" badge in this mode; it is
+never silently indistinguishable from a real analysis. Once a real key is
+set, this path is skipped entirely and every result is real. This only
+covers a *missing* key — if a real key is set but a live call fails, you
+still get the normal error banner, so a broken key doesn't quietly hide
+behind fake output.
 
 ## How it works
 
@@ -63,7 +76,10 @@ tolerates.
   category.
 - Oversized phone photo (8-12MB) → still succeeds after client-side resize.
 - Wrong file type (e.g. a PDF) → rejected before any network call.
-- Missing/invalid API key → clean error banner, no leaked stack trace.
+- No API key configured → simulated result with a visible "simulated" badge,
+  not an error.
+- Invalid/rejected API key (key set, but wrong) → clean error banner, no
+  leaked stack trace.
 - Network failure → error banner with a retry button, no infinite spinner.
 - Refresh after a result → page returns to a blank state.
 
