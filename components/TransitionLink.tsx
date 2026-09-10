@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { MouseEvent, ReactNode } from "react";
+import type { CSSProperties, MouseEvent, ReactNode } from "react";
 
 // Crossfades between routes using the browser's native View Transitions API
 // instead of a hard cut. Feature-detected: browsers without support (Safari,
@@ -10,10 +10,16 @@ export function TransitionLink({
   href,
   children,
   className,
+  style,
+  onMouseEnter,
+  ariaLabel,
 }: {
   href: string;
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
+  onMouseEnter?: () => void;
+  ariaLabel?: string;
 }) {
   const router = useRouter();
 
@@ -28,7 +34,14 @@ export function TransitionLink({
   }
 
   return (
-    <a href={href} onClick={handleClick} className={className}>
+    <a
+      href={href}
+      onClick={handleClick}
+      onMouseEnter={onMouseEnter}
+      className={className}
+      style={style}
+      aria-label={ariaLabel}
+    >
       {children}
     </a>
   );

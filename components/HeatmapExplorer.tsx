@@ -41,7 +41,15 @@ function Toggle({
   );
 }
 
-export function HeatmapExplorer() {
+export type MapFocus = { lat: number; lon: number; zoom: number };
+
+export function HeatmapExplorer({
+  focus = null,
+  initialView = "heat",
+}: {
+  focus?: MapFocus | null;
+  initialView?: "heat" | "points";
+}) {
   const [state, setState] = useState<LoadState>({ status: "loading" });
 
   const [showDefects, setShowDefects] = useState(true);
@@ -51,7 +59,7 @@ export function HeatmapExplorer() {
   const [defectTypes, setDefectTypes] = useState<Set<string>>(new Set(DEFECT_TYPES));
   const [council, setCouncil] = useState<string>("All");
   const [includeCompleted, setIncludeCompleted] = useState(false);
-  const [viewMode, setViewMode] = useState<"heat" | "points">("heat");
+  const [viewMode, setViewMode] = useState<"heat" | "points">(initialView);
 
   useEffect(() => {
     let cancelled = false;
@@ -237,7 +245,7 @@ export function HeatmapExplorer() {
             {state.message}
           </div>
         )}
-        <HeatmapMap points={filtered} viewMode={viewMode} />
+        <HeatmapMap points={filtered} viewMode={viewMode} focus={focus} />
 
         <div className="pointer-events-none absolute bottom-4 left-4 z-[900] rounded-xl border border-white/10 bg-[#0d1918]/95 p-3 text-xs text-zinc-300 shadow-lg backdrop-blur">
           <p className="mb-1.5 font-semibold uppercase tracking-wide text-zinc-400">Priority legend</p>

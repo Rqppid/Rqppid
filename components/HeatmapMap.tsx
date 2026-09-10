@@ -47,19 +47,26 @@ function popupHtml(p: HeatmapPoint): string {
 export function HeatmapMap({
   points,
   viewMode,
+  focus = null,
 }: {
   points: HeatmapPoint[];
   viewMode: "heat" | "points";
+  focus?: { lat: number; lon: number; zoom: number } | null;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const overlayRef = useRef<L.Layer | null>(null);
+  // Captured once: focus only applies to the map's initial view, and listing
+  // it as an effect dependency would tear down and rebuild the map on every
+  // render, since it arrives as a fresh object each time.
+  const initialFocusRef = useRef(focus);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    const initialFocus = initialFocusRef.current;
     const map = L.map(containerRef.current, {
-      center: NI_CENTER,
-      zoom: NI_INITIAL_ZOOM,
+      center: initialFocus ? [initialFocus.lat, initialFocus.lon] : NI_CENTER,
+      zoom: initialFocus ? initialFocus.zoom : NI_INITIAL_ZOOM,
       minZoom: 7,
       maxZoom: 18,
     });
@@ -67,6 +74,18 @@ export function HeatmapMap({
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map);
+
+    // Ring the deep-linked defect so it's obvious which one was clicked.
+    if (initialFocus) {
+      L.circleMarker([initialFocus.lat, initialFocus.lon], {
+        radius: 18,
+        weight: 2,
+        color: "#bef264",
+        fill: false,
+        interactive: false,
+      }).addTo(map);
+    }
+
     mapRef.current = map;
 
     return () => {

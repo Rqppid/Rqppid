@@ -1,7 +1,28 @@
 import { HeatmapExplorer } from "@/components/HeatmapExplorer";
 import { TransitionLink } from "@/components/TransitionLink";
+import { isWithinNI } from "@/lib/nigrid";
 
-export default function HeatmapPage() {
+function parseFocus(params: Record<string, string | string[] | undefined>) {
+  const raw = (key: string) => (typeof params[key] === "string" ? params[key] : undefined);
+  const lat = Number(raw("lat"));
+  const lon = Number(raw("lon"));
+  if (!raw("lat") || !raw("lon") || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  // Reject coordinates outside Northern Ireland so a hand-edited URL can't
+  // fling the map somewhere meaningless.
+  if (!isWithinNI(lat, lon)) return null;
+  const zoom = Number(raw("zoom"));
+  return { lat, lon, zoom: Number.isFinite(zoom) ? Math.min(Math.max(zoom, 7), 18) : 16 };
+}
+
+export default async function HeatmapPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const focus = parseFocus(params);
+  const initialView = params.view === "points" ? "points" : "heat";
+
   return (
     <div className="flex min-h-screen flex-col bg-[#071014] text-white">
       <div className="border-b border-white/10 bg-[#071014]/90 px-5 py-4 backdrop-blur">
@@ -27,7 +48,7 @@ export default function HeatmapPage() {
       </header>
 
       <div className="mx-auto flex w-full max-w-6xl flex-1">
-        <HeatmapExplorer />
+        <HeatmapExplorer focus={focus} initialView={initialView} />
       </div>
     </div>
   );

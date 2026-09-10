@@ -83,6 +83,8 @@ export async function GET() {
       id: point.id,
       x: Math.round(x * 10) / 10,
       y: Math.round(y * 10) / 10,
+      lat: point.lat,
+      lon: point.lon,
       label: shortRoadLabel(point.road),
       severityLabel: point.severityLabel,
       severityScore: point.severityScore,

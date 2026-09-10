@@ -15,6 +15,8 @@ type HeroPin = {
   id: string;
   x: number;
   y: number;
+  lat: number;
+  lon: number;
   label: string;
   severityLabel: string;
   severityScore: number;
@@ -120,13 +122,21 @@ export function HeroMap() {
         <div className="absolute left-[39%] top-[-7%] h-[115%] w-[2px] rotate-[23deg] bg-[#b5c5a4]/25" />
         <div className="absolute left-[64%] top-[18%] h-[2px] w-[48%] rotate-[57deg] bg-[#b5c5a4]/25" />
 
+        {/* Lies flat on the tilted plane, so it skews with the perspective
+            like a label painted on the road surface. */}
+        <p className="pointer-events-none absolute left-1/2 top-[36%] -translate-x-1/2 select-none text-4xl font-medium tracking-[-.08em] text-[#cbd7c8]/25 sm:text-5xl">
+          BELFAST
+        </p>
+
         {data?.points.map((pin) => {
           const active = hovered === pin.id;
           const color = pinColor(pin.severityScore);
           return (
-            <div
+            <TransitionLink
               key={pin.id}
-              className="absolute"
+              href={`/heatmap?lat=${pin.lat}&lon=${pin.lon}&zoom=16&view=points`}
+              ariaLabel={`${pin.label}, ${pin.severityLabel} priority. Open on the full Northern Ireland map.`}
+              className="absolute block cursor-pointer"
               style={{ left: `${pin.x}%`, top: `${pin.y}%`, transformStyle: "preserve-3d" }}
               onMouseEnter={() => setHovered(pin.id)}
             >
@@ -185,10 +195,13 @@ export function HeroMap() {
                         </span>
                       )}
                     </span>
+                    <span className="mt-1 block text-[11px] font-semibold text-lime-300">
+                      View on map →
+                    </span>
                   </span>
                 )}
               </span>
-            </div>
+            </TransitionLink>
           );
         })}
       </div>
