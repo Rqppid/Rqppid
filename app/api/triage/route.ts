@@ -2,13 +2,34 @@ import { z } from "zod";
 import { ApiError } from "@google/genai";
 import { genai, TRIAGE_MODEL } from "@/lib/geminiClient";
 import { SYSTEM_PROMPT } from "@/lib/rubric";
-import { TriageResultSchema, type ErrorCode, type TriageResponse } from "@/lib/schema";
-import { ACCEPTED_IMAGE_TYPES, MAX_CONTEXT_CHARS, MAX_UPLOAD_BYTES } from "@/lib/constants";
+import {
+  TriageResultSchema,
+  type ErrorCode,
+  type TriageResponse,
+} from "@/lib/schema";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  MAX_CONTEXT_CHARS,
+  MAX_UPLOAD_BYTES,
+} from "@/lib/constants";
 import { pickDemoResult } from "@/lib/demoResults";
 
 export const maxDuration = 60;
 
 const RESPONSE_JSON_SCHEMA = z.toJSONSchema(TriageResultSchema);
+
+// Gemini's per-minute limit trips easily during a live demo, and a short
+// burst usually clears within a couple of seconds. One retry turns most of
+// those into a slower success instead of a visible failure. Only one, and
+// only a 3s wait: a call takes ~10-13s, so a second retry could push past
+// this route's 60s ceiling. A sustained quota exhaustion still surfaces
+// honestly rather than being retried into the ground.
+const RETRYABLE_STATUSES = new Set([429, 500, 503]);
+const RETRY_DELAY_MS = 3000;
+
+function isRetryable(error: unknown): boolean {
+  return error instanceof ApiError && RETRYABLE_STATUSES.has(error.status);
+}
 
 function fail(code: ErrorCode, message: string, status: number) {
   const body: TriageResponse = { ok: false, error: { code, message } };
@@ -29,12 +50,24 @@ export async function POST(request: Request) {
     return fail("no_image", "No image was uploaded.", 400);
   }
 
-  if (!ACCEPTED_IMAGE_TYPES.includes(image.type as (typeof ACCEPTED_IMAGE_TYPES)[number])) {
-    return fail("invalid_file_type", "Only JPEG, PNG, or WebP images are supported.", 400);
+  if (
+    !ACCEPTED_IMAGE_TYPES.includes(
+      image.type as (typeof ACCEPTED_IMAGE_TYPES)[number],
+    )
+  ) {
+    return fail(
+      "invalid_file_type",
+      "Only JPEG, PNG, or WebP images are supported.",
+      400,
+    );
   }
 
   if (image.size > MAX_UPLOAD_BYTES) {
-    return fail("file_too_large", "Image is too large. Please use a smaller photo.", 400);
+    return fail(
+      "file_too_large",
+      "Image is too large. Please use a smaller photo.",
+      400,
+    );
   }
 
   // No key configured: return a clearly-labeled simulated result instead of
@@ -43,7 +76,11 @@ export async function POST(request: Request) {
   // still surfaces the honest error below, so a broken key doesn't go
   // unnoticed behind fake-but-plausible output.
   if (!process.env.GEMINI_API_KEY) {
-    const body: TriageResponse = { ok: true, data: pickDemoResult(), simulated: true };
+    const body: TriageResponse = {
+      ok: true,
+      data: pickDemoResult(),
+      simulated: true,
+    };
     return Response.json(body, { status: 200 });
   }
 
@@ -54,36 +91,49 @@ export async function POST(request: Request) {
 
   const base64Data = Buffer.from(await image.arrayBuffer()).toString("base64");
 
-  try {
-    const response = await genai.models.generateContent({
-      model: TRIAGE_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: contextText
-                ? `Inspector-provided context: ${contextText}`
-                : "No additional context was provided.",
+  const generateRequest = {
+    model: TRIAGE_MODEL,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: contextText
+              ? `Inspector-provided context: ${contextText}`
+              : "No additional context was provided.",
+          },
+          {
+            inlineData: {
+              mimeType: image.type,
+              data: base64Data,
             },
-            {
-              inlineData: {
-                mimeType: image.type,
-                data: base64Data,
-              },
-            },
-          ],
-        },
-      ],
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
-        responseMimeType: "application/json",
-        responseJsonSchema: RESPONSE_JSON_SCHEMA,
+          },
+        ],
       },
-    });
+    ],
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      responseMimeType: "application/json",
+      responseJsonSchema: RESPONSE_JSON_SCHEMA,
+    },
+  };
+
+  try {
+    let response;
+    try {
+      response = await genai.models.generateContent(generateRequest);
+    } catch (error) {
+      if (!isRetryable(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      response = await genai.models.generateContent(generateRequest);
+    }
 
     if (response.promptFeedback?.blockReason) {
-      return fail("model_declined", "The model declined to assess this image.", 200);
+      return fail(
+        "model_declined",
+        "The model declined to assess this image.",
+        200,
+      );
     }
 
     const finishReason = response.candidates?.[0]?.finishReason;
@@ -95,7 +145,7 @@ export async function POST(request: Request) {
         finishReason === "SAFETY" || finishReason === "PROHIBITED_CONTENT"
           ? "The model declined to assess this image."
           : "The model's response could not be parsed into a triage result.",
-        200
+        200,
       );
     }
 
@@ -103,7 +153,7 @@ export async function POST(request: Request) {
       return fail(
         "model_output_invalid",
         "The model's response could not be parsed into a triage result.",
-        200
+        200,
       );
     }
 
@@ -114,7 +164,7 @@ export async function POST(request: Request) {
       return fail(
         "model_output_invalid",
         "The model's response could not be parsed into a triage result.",
-        200
+        200,
       );
     }
 
@@ -123,7 +173,7 @@ export async function POST(request: Request) {
       return fail(
         "model_output_invalid",
         "The model's response could not be parsed into a triage result.",
-        200
+        200,
       );
     }
 
@@ -144,10 +194,22 @@ export async function POST(request: Request) {
         return fail("missing_api_key", "Server API key was rejected.", 500);
       }
       if (error.status === 429) {
-        return fail("rate_limited", "Rate limited by the API. Please try again shortly.", 429);
+        return fail(
+          "rate_limited",
+          "Too many requests in the last minute. Wait about 30 seconds and try again.",
+          429,
+        );
       }
-      return fail("upstream_error", "The triage model is temporarily unavailable.", 502);
+      return fail(
+        "upstream_error",
+        "The triage model is busy right now. Wait a few seconds and try again.",
+        502,
+      );
     }
-    return fail("upstream_error", "Unexpected error contacting the triage model.", 502);
+    return fail(
+      "upstream_error",
+      "Unexpected error contacting the triage model.",
+      502,
+    );
   }
 }
