@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CATEGORY_STYLES } from "@/lib/constants";
+import { HeroMap } from "@/components/HeroMap";
 import { Reveal } from "@/components/Reveal";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { TransitionLink } from "@/components/TransitionLink";
@@ -42,26 +43,6 @@ const REFLECTIONS = [
     body: "For a safety-relevant tool, a false category is worse than an honest non-answer. Blurry or ambiguous photos get flagged as unassessable instead of forced into a risk bucket.",
   },
 ];
-
-function Pin({ x, y, size = "normal" }: { x: number; y: number; size?: "normal" | "large" }) {
-  const large = size === "large";
-  return (
-    <span
-      className={`absolute grid place-items-center rounded-full ${
-        large ? "h-12 w-12 bg-orange-400/20 ring-1 ring-orange-300/50" : "h-7 w-7 bg-orange-400/15"
-      }`}
-      style={{ left: `${x}%`, top: `${y}%` }}
-    >
-      <span
-        className={`rounded-full bg-orange-400 ${
-          large
-            ? "h-4 w-4 shadow-[0_0_28px_8px_rgba(251,146,60,.55)]"
-            : "h-2.5 w-2.5 shadow-[0_0_16px_4px_rgba(251,146,60,.45)]"
-        }`}
-      />
-    </span>
-  );
-}
 
 export default function LandingPage() {
   return (
@@ -123,72 +104,12 @@ export default function LandingPage() {
               </a>
             </div>
             <p className="mt-9 max-w-md text-xs leading-5 text-zinc-600">
-              The map below is an illustrative mock-up, not live data. Built in
-              one week for Builders Night, Ormeau Labs, Belfast.
+              The map shows real outstanding defects recorded by DfI Roads.
+              Built in one week for Builders Night, Ormeau Labs, Belfast.
             </p>
           </div>
 
-          <div
-            id="map"
-            className="relative min-h-[510px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0d1918] shadow-2xl shadow-black/30 lg:min-h-[650px]"
-          >
-            <div className="absolute left-5 right-5 top-5 z-10 flex items-center justify-between">
-              <div className="rounded-full border border-white/10 bg-[#0c1515]/80 px-3 py-2 text-xs text-zinc-300 backdrop-blur">
-                <span className="mr-2 inline-block h-2 w-2 rounded-full bg-lime-300" />
-                Illustrative demo data
-              </div>
-              <TransitionLink
-                href="/heatmap"
-                className="rounded-full border border-lime-300/40 bg-lime-300/10 px-3 py-2 text-xs font-semibold text-lime-300 backdrop-blur transition hover:bg-lime-300/20"
-              >
-                See real NI data ↗
-              </TransitionLink>
-            </div>
-            <div
-              className="absolute inset-0 opacity-70"
-              style={{
-                backgroundImage:
-                  "linear-gradient(30deg,transparent 47%,rgba(202,220,199,.11) 48%,rgba(202,220,199,.11) 49%,transparent 50%),linear-gradient(-18deg,transparent 48%,rgba(202,220,199,.1) 49%,rgba(202,220,199,.1) 50%,transparent 51%),linear-gradient(90deg,transparent 49%,rgba(202,220,199,.07) 50%,transparent 51%)",
-                backgroundSize: "110px 80px, 150px 110px, 96px 96px",
-              }}
-            />
-            <div className="absolute left-[12%] top-[43%] h-[2px] w-[80%] rotate-[-10deg] bg-[#b5c5a4]/35 shadow-[0_0_12px_2px_rgba(205,227,190,.1)]" />
-            <div className="absolute left-[39%] top-[-7%] h-[115%] w-[2px] rotate-[23deg] bg-[#b5c5a4]/25" />
-            <div className="absolute left-[64%] top-[18%] h-[2px] w-[48%] rotate-[57deg] bg-[#b5c5a4]/25" />
-            <p className="absolute left-[42%] top-[34%] text-3xl font-medium tracking-[-.08em] text-[#cbd7c8]/30">
-              BELFAST
-            </p>
-            <p className="absolute left-[15%] top-[57%] text-[10px] uppercase tracking-[.2em] text-[#cbd7c8]/40">
-              Falls
-            </p>
-            <p className="absolute right-[14%] top-[55%] text-[10px] uppercase tracking-[.2em] text-[#cbd7c8]/40">
-              Ballyhackamore
-            </p>
-            <p className="absolute right-[32%] top-[76%] text-[10px] uppercase tracking-[.2em] text-[#cbd7c8]/40">
-              Ormeau
-            </p>
-            <Pin x={21} y={30} />
-            <Pin x={32} y={56} />
-            <Pin x={48} y={61} />
-            <Pin x={66} y={28} />
-            <Pin x={76} y={50} />
-            <Pin x={61} y={72} size="large" />
-            <aside className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/10 bg-[#111e1d]/95 p-4 shadow-xl backdrop-blur sm:left-auto sm:w-[310px]">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-lime-300">Highest activity</p>
-                  <h2 className="mt-1 text-lg font-medium tracking-tight">Ormeau Road</h2>
-                </div>
-                <span className="rounded-full bg-orange-400/15 px-2 py-1 text-[10px] font-semibold text-orange-300">
-                  HIGH
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-5 text-zinc-400">
-                Illustrative example — this hotspot view is a mock-up, not a
-                live feed of real reports.
-              </p>
-            </aside>
-          </div>
+          <HeroMap />
         </section>
       </div>
 
